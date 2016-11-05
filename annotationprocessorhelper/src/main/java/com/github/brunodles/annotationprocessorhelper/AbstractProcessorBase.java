@@ -13,7 +13,6 @@ import javax.tools.Diagnostic;
 
 public abstract class AbstractProcessorBase extends AbstractProcessor {
 
-    private static final String TAG = "AbstractProcessorBase";
     protected Elements elementUtils;
 
     @Override
@@ -55,13 +54,13 @@ public abstract class AbstractProcessorBase extends AbstractProcessor {
                         ", returning an empty set.");
     }
 
-    protected final void log(String msg) {
+    protected final void log(String tag, String msg) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-                String.format("%s - %s\n", TAG, msg));
+                String.format("%s - %s\n", tag, msg));
     }
 
-    protected final void fatalError(String msg) {
+    protected final void fatalError(String tag, String msg) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                String.format("%s FATAL ERROR - %s\n", TAG, msg));
+                String.format("%s FATAL ERROR - %s\n", tag, msg));
     }
 }
