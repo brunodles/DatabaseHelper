@@ -32,7 +32,6 @@ import javax.tools.JavaFileObject;
 
 import static java.lang.String.format;
 
-//@com.google.auto.service.AutoService(Processor.class)
 @SupportedAnnotations({CreateTable.class})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class TableGeneratorProcessor extends AbstractProcessorBase {
@@ -144,7 +143,7 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
         if (am == null) {
             return null;
         }
-        AnnotationValue av = getAnnotationValue(am, "myValue");
+        AnnotationValue av = getAnnotationValue(am, "value");
         if (av == null) {
             return null;
         } else {
@@ -169,7 +168,7 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
 
         } catch (IOException ex) {
             ex.printStackTrace();
-            fatalError(ex.getMessage());
+            fatalError(TAG, ex.getMessage());
         } finally {
             try {
                 if (osw != null) {
@@ -178,7 +177,7 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
-                fatalError(ex.getMessage());
+                fatalError(TAG, ex.getMessage());
             }
         }
     }
