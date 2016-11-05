@@ -7,9 +7,14 @@ dependencies {
     compile project(':classreader')
     compile project(':sqlhelper')
 
-//    compileOnly 'com.google.auto.service:auto-service:1.0-rc2'
-//    compileOnly 'org.apache.velocity:velocity:1.7'
-//    compile('com.github.spullara.mustache.java:compiler:0.8.18')
+//    compile 'com.google.auto.service:auto-service:1.0-rc2'
+    compile('com.github.spullara.mustache.java:compiler:0.8.18')
+}
+
+sourceSets {
+    main {
+        output.resourcesDir = "${buildDir}/classes/main"
+    }
 }
 
 sourceCompatibility = "1.7"
