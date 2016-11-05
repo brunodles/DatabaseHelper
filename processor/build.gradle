@@ -1,0 +1,16 @@
+apply plugin: 'java'
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile project(':annotationprocessorhelper')
+    compile project(':annotation')
+    compile project(':classreader')
+    compile project(':sqlhelper')
+
+//    compileOnly 'com.google.auto.service:auto-service:1.0-rc2'
+//    compileOnly 'org.apache.velocity:velocity:1.7'
+//    compile('com.github.spullara.mustache.java:compiler:0.8.18')
+}
+
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"
