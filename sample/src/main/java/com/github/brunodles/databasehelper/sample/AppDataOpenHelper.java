@@ -5,13 +5,16 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.github.brunodles.databasehelper.annotation.CreateTable;
+import com.github.brunodles.databasehelper.annotation.InjectCreate;
 
 
 /**
  * Created by bruno on 14/10/16.
  */
 
-@CreateTable(User.class)
+@CreateTable(value = User.class,
+        fieldGetter = CreateTable.FieldGetter.FIELD,
+        fieldSetter = CreateTable.FieldSetter.FIELD)
 public class AppDataOpenHelper extends SQLiteOpenHelper {
 
     private static final int VERSION = 1;
@@ -21,6 +24,7 @@ public class AppDataOpenHelper extends SQLiteOpenHelper {
     }
 
     @Override
+    @InjectCreate
     public void onCreate(SQLiteDatabase db) {
 //        db.execSQL(UserSqlHelper.CREATE);
     }

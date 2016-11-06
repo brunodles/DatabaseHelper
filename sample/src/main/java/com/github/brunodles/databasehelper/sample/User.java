@@ -12,7 +12,7 @@ public class User {
     public String email;
     public Boolean hireable;
     public String bio;
-    public Long public_repos;
+    public int public_repos;
     public Long public_gists;
     public Long followers;
     public Long following;
