@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.github.brunodles.primitiveutils.StringUtils.capitalFirst;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 public class Utils {
@@ -42,5 +44,13 @@ public class Utils {
         }
 
         throw new RuntimeException("Unmapped field type for \"" + typeLowerCase + "\"");
+    }
+
+    public static String dbFieldKey(Field field) {
+        return format("F_%s", field.name.toUpperCase());
+    }
+
+    public static String readFieldFromDb(Field field) {
+        return format("Db.get%s(cursor, %s)", capitalFirst(field.type), dbFieldKey(field));
     }
 }

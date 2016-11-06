@@ -6,12 +6,18 @@ import com.github.brunodles.annotationprocessorhelper.SupportedAnnotations;
 import com.github.brunodles.classreader.ClassReader;
 import com.github.brunodles.classreader.Field;
 import com.github.brunodles.databasehelper.annotation.CreateTable;
+import com.github.brunodles.databasehelper.writer.MethodBuilder;
+import com.github.brunodles.databasehelper.writer.OutputClass;
 import com.github.brunodles.sqlhelper.CreateBuilder;
 import com.github.brunodles.sqlhelper.SqlHelper;
+import com.github.mustachejava.DefaultMustacheFactory;
+import com.github.mustachejava.Mustache;
+import com.github.mustachejava.MustacheFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +36,9 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.JavaFileObject;
 
+import static com.github.brunodles.databasehelper.processor.Utils.readFieldFromDb;
+import static com.github.brunodles.primitiveutils.FormattableString.formattable;
+import static com.github.brunodles.primitiveutils.StringUtils.quote;
 import static java.lang.String.format;
 
 @SupportedAnnotations({CreateTable.class})
@@ -37,7 +46,6 @@ import static java.lang.String.format;
 public class TableGeneratorProcessor extends AbstractProcessorBase {
 
     private static final String TAG = "[ TableGeneratorProcessor ]";
-    public static final String CONTENT_VALUES_DECLARATION = "@NonNull private static ContentValues updateValues(%s object) {\nContentValues values = new ContentValues();\n";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -49,6 +57,8 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
         for (TypeElement te : annotations) {
             for (Element e : roundEnv.getElementsAnnotatedWith(te)) {
                 CreateTable a = e.getAnnotation(CreateTable.class);
+                String fieldReadMethod = a.fieldGetter().method;
+                String fieldWriteMethod = a.fieldSetter().method;
                 TypeElement value = asTypeElement(getMyValue1(a));
 
                 ClassReader reader = ClassReader.Factory.read(this.processingEnv, value);
@@ -57,53 +67,53 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
                 String packageName = e.toString().replace("." + e.getSimpleName(), "");
                 String tableName = Utils.classNameToTableName(value.getSimpleName().toString());
 
+                OutputClass outputClass = new OutputClass(packageName, className);
+                outputClass.addImport("android.content.ContentValues")
+                        .addImport("android.support.annotation.NonNull")
+                        .addImport("android.database.Cursor")
+                        .addImport(value.getQualifiedName().toString());
+
+                outputClass.addPublicConstant("TABLE_NAME", String.class).value(quote(tableName));
                 CreateBuilder createBuilder = SqlHelper.create(tableName);
-                StringBuilder constantsFields = new StringBuilder()
-                        .append("public static final String TABLE_NAME = \"")
-                        .append(tableName).append("\";\n\n");
-                StringBuilder contentValuesBuilder = new StringBuilder()
-                        .append(format(CONTENT_VALUES_DECLARATION, reader.getClassName()));
+                MethodBuilder contentValues = outputClass
+                        .addMethod("public", "createValues", "ContentValues", "static", "final")
+                        .addParam("object", reader.getClassName())
+                        .addLine("ContentValues values = new ContentValues();");
+                MethodBuilder readCursor = outputClass
+                        .addMethod("public", "readCursor", reader.getClassName(), "static", "final")
+                        .addParam("cursor", "Cursor")
+                        .addLine(String.format("%1$s object = new %1$s();", reader.getClassName()));
 
                 for (Field field : reader.getFields()) {
+                    outputClass.addImport(field.typeCanonical);
+
+                    String fieldKey = Utils.dbFieldKey(field);
+                    outputClass.addPublicConstant(fieldKey, String.class)
+                            .value(quote(field.name));
                     createBuilder.add(field.name, Utils.dbFieldType(field));
-                    constantsFields.append("public static final String F_")
-                            .append(field.name.toUpperCase())
-                            .append(" = \"")
-                            .append(field.name)
-                            .append("\";\n");
-                    contentValuesBuilder.append(format("values.put(F_%s, object.%s);\n", field.name.toUpperCase(), field.name));
+                    contentValues.addLine(format("values.put(%s, object." + fieldReadMethod + ");",
+                            fieldKey, field.name));
+
+                    readCursor.addLine(format("object." + fieldWriteMethod + ";", formattable(field.name),
+                            readFieldFromDb(field)));
                 }
+                readCursor.addLine("return object;");
+                contentValues.addLine("return values;");
 
-                contentValuesBuilder.append("return values;\n}");
+                outputClass.addPublicConstant("CREATE_TABLE", String.class)
+                        .value(quote(createBuilder.build()));
 
-                StringBuilder imports = new StringBuilder()
-                        .append("import android.content.ContentValues;\n")
-                        .append("import android.support.annotation.NonNull;\n")
-                        .append("import ").append(value.getQualifiedName()).append(";\n");
-
-                StringBuilder body = new StringBuilder()
-                        .append("package ")
-                        .append(packageName)
-                        .append(";\n\n")
-                        .append(imports)
-                        .append("\n\n")
-                        .append("public final class ")
-                        .append(className)
-                        .append(" {\n\n")
-                        .append(constantsFields)
-                        .append("\n")
-                        .append("public static final String CREATE_TABLE = ")
-                        .append("\"")
-                        .append(createBuilder.build())
-                        .append("\"")
-                        .append(";\n\n")
-                        .append(contentValuesBuilder)
-                        .append("\n\n")
-                        .append("private ").append(className).append("(){}")
-                        .append("\n}");
-
-                System.out.printf("write class -> %s.%s\n", packageName, className);
-                writeClass(className, packageName, body.toString());
+                MustacheFactory mf = new DefaultMustacheFactory();
+                Mustache mustache = mf.compile("class.mustache");
+                StringWriter writer = new StringWriter();
+                try {
+                    log(TAG, String.format("build helper class -> %s.%s", packageName, className));
+                    mustache.execute(writer, outputClass).flush();
+                    log(TAG, writer.toString());
+                    writeClass(className, packageName, writer.toString());
+                } catch (IOException e1) {
+                    fatalError(TAG, e1.getMessage());
+                }
             }
         }
         return true;

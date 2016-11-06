@@ -6,6 +6,7 @@ dependencies {
     compile project(':annotation')
     compile project(':classreader')
     compile project(':sqlhelper')
+    compile project(':primitiveutils')
 
 //    compile 'com.google.auto.service:auto-service:1.0-rc2'
     compile('com.github.spullara.mustache.java:compiler:0.8.18')
