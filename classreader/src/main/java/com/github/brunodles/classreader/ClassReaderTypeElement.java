@@ -31,7 +31,6 @@ class ClassReaderTypeElement implements ClassReader {
         for (Element element : typeElement.getEnclosedElements()) {
             if (!element.getKind().isField()) continue;
             String type = element.asType().toString();
-            type = type.substring(type.lastIndexOf(".") + 1);
             Field field = new Field(element.getSimpleName().toString(), type);
             fields.add(field);
         }

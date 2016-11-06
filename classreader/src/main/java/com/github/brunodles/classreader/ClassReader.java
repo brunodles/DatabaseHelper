@@ -20,6 +20,7 @@ public interface ClassReader {
 
     public static final class Factory {
 
+        @Deprecated
         public static ClassReader read(String filePath) throws IOException {
             return new ClassreaderTextInterpretor(filePath);
         }

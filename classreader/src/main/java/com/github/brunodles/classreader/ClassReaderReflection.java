@@ -37,7 +37,7 @@ class ClassReaderReflection implements ClassReader {
     }
 
     private static Field buildField(java.lang.reflect.Field field) {
-        Field newField = new Field(field.getName(), field.getType().getSimpleName());
+        Field newField = new Field(field.getName(), field.getType().getCanonicalName());
         Annotation[] declaredAnnotations = field.getDeclaredAnnotations();
         for (Annotation declaredAnnotation : declaredAnnotations) {
             if (declaredAnnotation.getClass().getName().contains("NonNull"))
