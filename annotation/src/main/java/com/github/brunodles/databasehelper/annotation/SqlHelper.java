@@ -14,7 +14,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Documented
 @Target(TYPE)
 @Retention(CLASS)
-public @interface CreateTable {
+public @interface SqlHelper {
     Class value();
 
     FieldGetter fieldGetter() default FieldGetter.FIELD;

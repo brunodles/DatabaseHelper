@@ -14,5 +14,5 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Target({TYPE, FIELD, METHOD})
 @Retention(CLASS)
 public @interface SqlHelpers {
-    CreateTable[] value();
+    SqlHelper[] value();
 }
