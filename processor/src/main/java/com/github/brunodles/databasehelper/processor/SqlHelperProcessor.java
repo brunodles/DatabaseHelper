@@ -19,6 +19,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,29 +56,60 @@ public class SqlHelperProcessor extends AbstractProcessorBase {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (TypeElement te : annotations) {
-            for (Element e : roundEnv.getElementsAnnotatedWith(te)) {
-                checkCreateTable(e);
-                checkSqlHelpers(e);
+        for (TypeElement typeElement : annotations) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(typeElement)) {
+                List<OutputClass> outputClasses = checkSqlHelpers(element);
+                OutputClass outputClass = checkSqlHelper(element);
+                if (outputClass != null) outputClasses.add(outputClass);
+                createHelper(element, outputClasses);
             }
         }
         return true;
     }
 
-    private void checkSqlHelpers(Element element) {
-        SqlHelpers annotation = element.getAnnotation(SqlHelpers.class);
-        SqlHelper[] value = annotation.value();
-        for (SqlHelper sqlHelper : value) {
-            buildHelperClass(element, sqlHelper);
+    private void createHelper(Element element, List<OutputClass> sqlHelperClasses) {
+        String className = element.getSimpleName() + "_Helper";
+        String packageName = element.toString().replace("." + element.getSimpleName(), "");
+
+        OutputClass outputClass = new OutputClass(packageName, className)
+                .addImport("android.database.sqlite.SQLiteDatabase");
+        MethodBuilder onCreate = outputClass.addMethod("public", "onCreate", "void", "static")
+                .addParam("db", "SQLiteDatabase");
+        for (OutputClass aClass : sqlHelperClasses) {
+            outputClass.addImport(aClass.packageName() + "." + aClass.className());
+            onCreate.addLine("db.execSQL(" + aClass.className() + ".CREATE_TABLE);");
+        }
+
+        MustacheFactory mf = new DefaultMustacheFactory();
+        Mustache mustache = mf.compile("class.mustache");
+        StringWriter writer = new StringWriter();
+        try {
+            log(TAG, String.format("build helper class -> %s.%s", packageName, className));
+            mustache.execute(writer, outputClass).flush();
+            log(TAG, writer.toString());
+            writeClass(className, packageName, writer.toString());
+        } catch (IOException e1) {
+            fatalError(TAG, e1.getMessage());
         }
     }
 
-    private void checkCreateTable(Element e) {
-        SqlHelper a = e.getAnnotation(SqlHelper.class);
-        if (a != null) buildHelperClass(e, a);
+    private List<OutputClass> checkSqlHelpers(Element element) {
+        SqlHelpers annotation = element.getAnnotation(SqlHelpers.class);
+        ArrayList<OutputClass> outputClasses = new ArrayList<>();
+        if (annotation == null) return outputClasses;
+        SqlHelper[] value = annotation.value();
+        for (SqlHelper sqlHelper : value)
+            outputClasses.add(buildHelperClass(element, sqlHelper));
+        return outputClasses;
     }
 
-    private void buildHelperClass(Element element, SqlHelper annotation) {
+    private OutputClass checkSqlHelper(Element e) {
+        SqlHelper a = e.getAnnotation(SqlHelper.class);
+        if (a == null) return null;
+        return buildHelperClass(e, a);
+    }
+
+    private OutputClass buildHelperClass(Element element, SqlHelper annotation) {
         String fieldReadMethod = annotation.fieldGetter().method;
         String fieldWriteMethod = annotation.fieldSetter().method;
         TypeElement value = asTypeElement(getMyValue1(annotation));
@@ -134,6 +167,7 @@ public class SqlHelperProcessor extends AbstractProcessorBase {
         } catch (IOException e1) {
             fatalError(TAG, e1.getMessage());
         }
+        return outputClass;
     }
 
     private static TypeMirror getMyValue1(SqlHelper annotation) {
