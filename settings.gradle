@@ -1,1 +1,1 @@
-include ':sample', ':annotation', ':processor', ':classreader', ':sqlhelper', ':annotationprocessorhelper', ':primitiveutils'
+include ':sample', ':annotation', ':processor', ':classreader', ':sqlhelper', ':annotationprocessorhelper', ':primitiveutils', ':aspect'
