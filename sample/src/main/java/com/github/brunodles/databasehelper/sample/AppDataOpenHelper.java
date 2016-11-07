@@ -4,15 +4,14 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.github.brunodles.databasehelper.annotation.SqlHelper;
 import com.github.brunodles.databasehelper.annotation.InjectCreate;
+import com.github.brunodles.databasehelper.annotation.SqlHelper;
 import com.github.brunodles.databasehelper.annotation.SqlHelpers;
 
 
 /**
  * Created by bruno on 14/10/16.
  */
-
 @SqlHelpers({
         @SqlHelper(value = User.class,
                 fieldGetter = SqlHelper.FieldGetter.FIELD,
@@ -30,8 +29,6 @@ public class AppDataOpenHelper extends SQLiteOpenHelper {
     @Override
     @InjectCreate
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(UserSqlHelper.CREATE_TABLE);
-        db.execSQL(HrefSqlHelper.CREATE_TABLE);
     }
 
     @Override
