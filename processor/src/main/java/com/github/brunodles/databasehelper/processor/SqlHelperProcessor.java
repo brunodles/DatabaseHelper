@@ -5,12 +5,11 @@ import com.github.brunodles.annotationprocessorhelper.AbstractProcessorBase;
 import com.github.brunodles.annotationprocessorhelper.SupportedAnnotations;
 import com.github.brunodles.classreader.ClassReader;
 import com.github.brunodles.classreader.Field;
-import com.github.brunodles.databasehelper.annotation.CreateTable;
+import com.github.brunodles.databasehelper.annotation.SqlHelper;
 import com.github.brunodles.databasehelper.annotation.SqlHelpers;
 import com.github.brunodles.databasehelper.writer.MethodBuilder;
 import com.github.brunodles.databasehelper.writer.OutputClass;
 import com.github.brunodles.sqlhelper.CreateBuilder;
-import com.github.brunodles.sqlhelper.SqlHelper;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
@@ -42,11 +41,11 @@ import static com.github.brunodles.primitiveutils.FormattableString.formattable;
 import static com.github.brunodles.primitiveutils.StringUtils.quote;
 import static java.lang.String.format;
 
-@SupportedAnnotations({CreateTable.class, SqlHelpers.class})
+@SupportedAnnotations({SqlHelper.class, SqlHelpers.class})
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
-public class TableGeneratorProcessor extends AbstractProcessorBase {
+public class SqlHelperProcessor extends AbstractProcessorBase {
 
-    private static final String TAG = "[ TableGeneratorProcessor ]";
+    private static final String TAG = "[ SqlHelperProcessor ]";
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -66,18 +65,18 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
 
     private void checkSqlHelpers(Element element) {
         SqlHelpers annotation = element.getAnnotation(SqlHelpers.class);
-        CreateTable[] value = annotation.value();
-        for (CreateTable createTable : value) {
-            buildHelperClass(element, createTable);
+        SqlHelper[] value = annotation.value();
+        for (SqlHelper sqlHelper : value) {
+            buildHelperClass(element, sqlHelper);
         }
     }
 
     private void checkCreateTable(Element e) {
-        CreateTable a = e.getAnnotation(CreateTable.class);
+        SqlHelper a = e.getAnnotation(SqlHelper.class);
         if (a != null) buildHelperClass(e, a);
     }
 
-    private void buildHelperClass(Element element, CreateTable annotation) {
+    private void buildHelperClass(Element element, SqlHelper annotation) {
         String fieldReadMethod = annotation.fieldGetter().method;
         String fieldWriteMethod = annotation.fieldSetter().method;
         TypeElement value = asTypeElement(getMyValue1(annotation));
@@ -95,7 +94,7 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
                 .addImport(value.getQualifiedName().toString());
 
         outputClass.addPublicConstant("TABLE_NAME", String.class).value(quote(tableName));
-        CreateBuilder createBuilder = SqlHelper.create(tableName);
+        CreateBuilder createBuilder = com.github.brunodles.sqlhelper.SqlHelper.create(tableName);
         MethodBuilder contentValues = outputClass
                 .addMethod("public", "createValues", "ContentValues", "static", "final")
                 .addParam("object", reader.getClassName())
@@ -137,7 +136,7 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
         }
     }
 
-    private static TypeMirror getMyValue1(CreateTable annotation) {
+    private static TypeMirror getMyValue1(SqlHelper annotation) {
         try {
             annotation.value(); // this should throw
         } catch (MirroredTypeException mte) {
@@ -167,7 +166,7 @@ public class TableGeneratorProcessor extends AbstractProcessorBase {
 
 
     public TypeMirror getMyValue2(TypeElement foo) {
-        AnnotationMirror am = getAnnotationMirror(foo, CreateTable.class);
+        AnnotationMirror am = getAnnotationMirror(foo, SqlHelper.class);
         if (am == null) {
             return null;
         }
