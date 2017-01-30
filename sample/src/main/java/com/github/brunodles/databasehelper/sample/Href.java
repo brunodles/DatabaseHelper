@@ -5,4 +5,5 @@ package com.github.brunodles.databasehelper.sample;
  */
 public class Href {
     public String href;
+    public String lilao;
 }

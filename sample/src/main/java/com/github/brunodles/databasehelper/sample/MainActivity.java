@@ -16,6 +16,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         SQLiteDatabase writableDatabase = new AppDataOpenHelper(this).getWritableDatabase();
-        writableDatabase.execSQL("SELECT * FROM " + UserSqlHelper.TABLE_NAME);
+//        writableDatabase.execSQL("SELECT * FROM " + UserSqlHelper.TABLE_NAME);
     }
 }

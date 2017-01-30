@@ -179,26 +179,6 @@ public class SqlHelperProcessor extends AbstractProcessorBase {
         return null; // can this ever happen ??
     }
 
-    private static AnnotationMirror getAnnotationMirror(TypeElement typeElement, Class<?> clazz) {
-        String clazzName = clazz.getName();
-        for (AnnotationMirror m : typeElement.getAnnotationMirrors()) {
-            if (m.getAnnotationType().toString().equals(clazzName)) {
-                return m;
-            }
-        }
-        return null;
-    }
-
-    private static AnnotationValue getAnnotationValue(AnnotationMirror annotationMirror, String key) {
-        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
-            if (entry.getKey().getSimpleName().toString().equals(key)) {
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
-
-
     public TypeMirror getMyValue2(TypeElement foo) {
         AnnotationMirror am = getAnnotationMirror(foo, SqlHelper.class);
         if (am == null) {
@@ -212,6 +192,26 @@ public class SqlHelperProcessor extends AbstractProcessorBase {
         }
     }
 
+    private static AnnotationMirror getAnnotationMirror(TypeElement typeElement, Class<?> clazz) {
+        String clazzName = clazz.getName();
+        for (AnnotationMirror m : typeElement.getAnnotationMirrors()) {
+            if (m.getAnnotationType().toString().equals(clazzName)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
+
+    private static AnnotationValue getAnnotationValue(AnnotationMirror annotationMirror, String key) {
+        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
+            if (entry.getKey().getSimpleName().toString().equals(key)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
     private TypeElement asTypeElement(TypeMirror typeMirror) {
         Types TypeUtils = this.processingEnv.getTypeUtils();
         return (TypeElement) TypeUtils.asElement(typeMirror);
@@ -220,7 +220,6 @@ public class SqlHelperProcessor extends AbstractProcessorBase {
     private void writeClass(String className, String packageName, String content) {
         OutputStreamWriter osw = null;
         try {
-            // create a model file
             JavaFileObject fileObject = processingEnv.getFiler().createSourceFile(packageName + "." + className,
                     elementUtils.getTypeElement(packageName));
             OutputStream os = fileObject.openOutputStream();
